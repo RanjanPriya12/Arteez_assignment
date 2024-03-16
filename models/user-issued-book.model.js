@@ -9,6 +9,6 @@ const bookIssuedSchema = new mongoose.Schema({
     versionKey: false
 });
 
-const UserBookIssued = mongoose.model('User-Book-Issued', bookIssuedSchema);
+const UserBookIssued = mongoose.model('UserBookIssued', bookIssuedSchema);
 
 module.exports = UserBookIssued;

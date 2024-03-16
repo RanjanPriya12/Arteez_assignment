@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const uri = 'mongodb://localhost:27017/libraryManagement'; 
+const uri = 'mongodb://127.0.0.1:27017/libraryManagement'; 
 
 const connectDB = async () => {
     try {

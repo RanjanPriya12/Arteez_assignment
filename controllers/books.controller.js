@@ -25,7 +25,7 @@ exports.addBook = async (req, res) => {
 
 exports.getAllBooks = async (req, res) => {
     try {
-        const books = Book.find({});
+        const books = await Book.find({});
         if (!books) {
             return res.status(401).send({ Success: false, message: "Unable to fetch books" });
         }
@@ -37,7 +37,7 @@ exports.getAllBooks = async (req, res) => {
 
 exports.issueBook = async (req, res) => {
     try {
-        const book = await UserBookIssued.findOne({ bookId: req.params.bookId, userId: userId });
+        const book = await UserBookIssued.findOne({ bookId: req.params.bookId, userId: req.params.userId });
         if (book) {
             return res.status(200).send({ Success: false, message: "Book is already issued for this user", book: book });
         }
@@ -45,10 +45,10 @@ exports.issueBook = async (req, res) => {
             const bookForIuuse = await Book.findById({ _id: req.params.bookId });
             if (bookForIuuse && bookForIuuse.quantity>=1) {
                 await Book.updateOne({ _id: bookForIuuse._id }, { $set: { quantity: bookForIuuse.quantity - 1 } });
-                const bookId = mongoose.Types.ObjectId(req.params.bookId);
-                const userId = mongoose.Types.ObjectId(req.params.userId);
+                const bookId =new mongoose.Types.ObjectId(req.params.bookId);
+                const userId =new mongoose.Types.ObjectId(req.params.userId);
                 await UserBookIssued.create({ bookId: bookId, userId: userId });
-                return res.status(200).send({ Success: false, message: "Book issued", book: bookForIuuse.title });
+                return res.status(200).send({ Success: true, message: "Book issued", book: bookForIuuse.title });
             }
             else {
                 return res.status(200).send({ Success: false, message: "This book is no more available in the library" });
@@ -72,7 +72,7 @@ exports.returnBook = async (req, res) => {
         if (bookForReturn && book) {
             const updatedBook = await Book.updateOne({ _id: book._id }, { $set: { quantity: book.quantity + 1 } });
             await UserBookIssued.findByIdAndDelete({ _id: bookForReturn._id });
-            return res.status(200).send({ Success: false, message: "Book returned", book: updatedBook.title });
+            return res.status(200).send({ Success: true, message: "Book returned", book: updatedBook.title });
         }
         else {
             return res.status(200).send({ Success: false, message: "Book not found" });
@@ -83,12 +83,12 @@ exports.returnBook = async (req, res) => {
     }
 };
 
-exports.findBooksIssuedToUser = async (res, res) => {
+exports.findBooksIssuedToUser = async (req, res) => {
     try {
         const issuedBooks = await UserBookIssued.aggregate([
             {
                 $match: {
-                    userId: mongoose.Types.ObjectId(req.params.userId)
+                    userId:new mongoose.Types.ObjectId(req.params.userId)
                 }
             },
             {
@@ -110,11 +110,11 @@ exports.findBooksIssuedToUser = async (res, res) => {
             {
                 $project: {
                     _id: 0,
-                    bookName: { $arrElemAt: ["$bookInfo.title", 0] },
-                    userName: { $arrElemAt: ["$userInfo.username", 0] }
+                    bookName: { $arrayElemAt: ["$bookInfo.title", 0] },
+                    userName: { $arrayElemAt: ["$userInfo.username", 0] }
                 }
             }
-        ]).toArray();
+        ]);
 
         if (issuedBooks.length < 0) {
             return res.status(401).send({ Success: false, message: "No book issued to this user"});  
